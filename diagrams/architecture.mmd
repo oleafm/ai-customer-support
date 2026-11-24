@@ -1,0 +1,27 @@
+flowchart TD
+    A["Email or webhook request"] --> B["Authenticate and validate input"]
+    B --> C{"Atomic event claim"}
+    B -->|"Invalid"| X["Reject and record reason"]
+    C -->|"Duplicate"| D["Return stored status"]
+    C -->|"New or safe retry"| E["LLM classification"]
+    E --> F{"Schema valid"}
+    F -->|"Yes"| G["Authorised CRM lookup"]
+    G --> H{"Documentation needed"}
+    H -->|"Yes"| I["Retrieve approved documentation"]
+    H -->|"No"| J["Deterministic routing rules"]
+    I --> J
+    F -->|"No"| K["Human review queue"]
+    J -->|"Sensitive or uncertain"| K
+    J -->|"Routine"| L["Create routed case"]
+    K --> M{"Authorised reviewer decision"}
+    M -->|"Approve"| L
+    M -->|"Reject or expire"| N["Close or hold case"]
+    L --> O["Slack notification"]
+    O --> P["Persist outcome and redacted log"]
+    N --> P
+    E -.->|"Execution failure"| Q["Bounded retry or failure queue"]
+    G -.->|"Execution failure"| Q
+    I -.->|"Execution failure"| Q
+    L -.->|"Execution failure"| Q
+    O -.->|"Execution failure"| Q
+    Q --> P
